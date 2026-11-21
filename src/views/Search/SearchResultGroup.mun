@@ -1,0 +1,21 @@
+import { VaultStore } from '../../model/VaultStore.mun'
+import { formatRoute } from '../../ui/router.ts'
+
+// A matching note: its title and folder, as a link to the note. Counterpart of SearchResultGroup.swift
+// (the server returns ranked notes, not matching lines).
+struct SearchResultGroup: View {
+  @Environment(VaultStore.self) var store
+  let hit: any
+
+  init(hit: any) {
+    self.hit = hit
+  }
+
+  var body: some View {
+    Element('a', { className: 'search-hit', href: formatRoute({ vault: store.vaultName, path: hit.path }), 'aria-current': store.openPath === hit.path ? 'page' : undefined }) {
+      Element('span', { className: 'search-hit-title' }) { Text(hit.title) }
+      Element('span', { className: 'search-hit-path' }) { Text(hit.path) }
+    }
+  }
+}
+export { SearchResultGroup }

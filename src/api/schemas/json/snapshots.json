@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Snapshots",
+  "description": "GET /v1/snapshots",
+  "type": "object",
+  "required": ["snapshots"],
+  "additionalProperties": false,
+  "properties": {
+    "snapshots": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["snapshot", "document", "revision", "path", "hash", "bytes", "reason", "created"],
+        "additionalProperties": false,
+        "properties": {
+          "snapshot": {"type": "string", "pattern": "^[0-9a-f]{32}$"},
+          "document": {"type": "string", "pattern": "^[0-9a-f]{32}$"},
+          "revision": {"type": "string", "pattern": "^[0-9a-f]{32}$"},
+          "path": {"type": "string"},
+          "hash": {"type": "string"},
+          "bytes": {"type": "integer", "minimum": 0},
+          "reason": {"type": "string"},
+          "created": {"type": "string"}
+        }
+      }
+    }
+  }
+}

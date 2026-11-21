@@ -1,0 +1,47 @@
+import { VaultStore } from '../../model/VaultStore.mun'
+import { PathBar } from './PathBar.mun'
+import { EditorBanner } from './EditorBanner.mun'
+import { scrollNoteTo, clickedTag } from '../../ui/scroll.ts'
+
+// The open note, rendered and read-only: the read-only counterpart of DocumentEditorView.swift
+// until the editor arrives. The HTML in store.note.html was produced by the Markdown renderer and
+// sanitized with DOMPurify before it got here, so it is handed to the DOM as it is.
+struct DocumentReaderView: View {
+  @Environment(VaultStore.self) var store
+  var search: any { return store.search }
+
+  func openTag(event) {
+    let name = clickedTag(event)
+    if (name !== null) {
+      event.preventDefault()
+      search.showTag(name)
+      store.showSearch()
+    }
+  }
+
+  var body: some View {
+    Element('div', { className: 'note-scroll', 'data-note-scroll': '' }) {
+      if (store.noteState === 'failed') {
+        EditorBanner(store.noteError ?? 'The note could not be loaded.', kind: 'error', actionTitle: 'Try again', action: () => store.retryNote())
+      }
+      if (store.noteState === 'notFound') {
+        EditorBanner('There is no note at ' + store.openPath + '.', kind: 'error', actionTitle: null, action: null)
+      }
+      if (store.noteState === 'loading' && store.note === null) {
+        Element('p', { className: 'loading', role: 'status' }) { Text('Loading...') }
+      }
+      if (store.note !== null) {
+        Element('div', { className: 'note-page' }) {
+          PathBar(path: store.note.path)
+          Element('h1', { className: 'note-title' }) { Text(store.note.title) }
+          Element('article', { className: 'markdown-body', 'data-revision': store.note.revision, unsafeHTML: store.note.html, onClick: event => openTag(event) })
+        }
+      }
+    }
+    .task(id: (store.openPath ?? '') + '|' + (store.note === null ? '' : store.note.revision) + '|' + (store.heading ?? '')) { signal in
+      await new Promise(resolve => requestAnimationFrame(resolve))
+      scrollNoteTo(store.heading)
+    }
+  }
+}
+export { DocumentReaderView }

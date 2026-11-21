@@ -1,0 +1,37 @@
+import { VaultStore } from './model/VaultStore.mun'
+import { LoginView } from './views/Login/LoginView.mun'
+import { ContentView } from './views/ContentView.mun'
+
+// The root: the sign-in form until the server accepts the session, then the main window.
+struct App: View {
+  @State var store = new VaultStore()
+
+  var body: some View {
+    Element('div', { className: 'app', 'data-phase': store.phase }) {
+      if (store.phase === 'booting') {
+        Element('p', { className: 'boot', role: 'status' }) { Text('Loading...') }
+      } else if (store.phase === 'signedOut') {
+        LoginView()
+      } else if (store.phase === 'failed') {
+        Element('main', { className: 'login' }) {
+          Element('div', { className: 'login-card' }) {
+            Element('h1', null) { Text('Andesite') }
+            Element('p', { className: 'error', role: 'alert' }) { Text(store.errorMessage ?? 'Something went wrong.') }
+            Element('button', { type: 'button', className: 'primary', onClick: () => store.bootstrap() }) { Text('Try again') }
+          }
+        }
+      } else {
+        ContentView()
+      }
+    }
+    .environment(store)
+    .task { signal in
+      await store.start()
+      let refresh = () => { if (document.visibilityState === 'visible') { store.refresh() } }
+      document.addEventListener('visibilitychange', refresh)
+      signal.addEventListener('abort', () => { document.removeEventListener('visibilitychange', refresh); store.stop() }, { once: true })
+    }
+  }
+}
+
+export default App()

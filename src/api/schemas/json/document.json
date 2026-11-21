@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Document",
+  "description": "One document of the index: PUT/POST write routes, GET /v1/documents entries, and tag-filtered search hits.",
+  "type": "object",
+  "required": ["document", "revision", "path", "title", "hash", "bytes", "kind"],
+  "additionalProperties": false,
+  "properties": {
+    "document": {"type": "string", "pattern": "^[0-9a-f]{32}$", "description": "Stable document ID."},
+    "revision": {"type": "string", "pattern": "^[0-9a-f]{32}$", "description": "Current revision; send it back as If-Match."},
+    "path": {"type": "string"},
+    "title": {"type": "string"},
+    "hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "bytes": {"type": "integer", "minimum": 0},
+    "kind": {"type": "string", "description": "`markdown`, or another kind for attachments."}
+  }
+}

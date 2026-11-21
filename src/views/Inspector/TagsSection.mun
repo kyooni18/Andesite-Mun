@@ -1,0 +1,28 @@
+import { VaultStore } from '../../model/VaultStore.mun'
+import { InspectorSection } from './InspectorSection.mun'
+import { TagPill } from '../Tags/TagPill.mun'
+
+// The tags of the open note, from its frontmatter and its text. Choosing one searches for it.
+// Counterpart of TagsSection.swift.
+struct TagsSection: View {
+  @Environment(VaultStore.self) var store
+  var inspector: any { return store.inspector }
+  var search: any { return store.search }
+
+  var body: some View {
+    InspectorSection("Tags", count: inspector.data === null ? null : inspector.data.tags.length) {
+      if (inspector.data === null) {
+        Element('p', { className: 'inspector-placeholder' }) { Text(inspector.state === 'failed' ? 'Tags could not be loaded.' : 'Loading...') }
+      } else if (inspector.data.tags.length === 0) {
+        Element('p', { className: 'inspector-placeholder' }) { Text('No tags') }
+      } else {
+        Element('div', { className: 'tag-list' }) {
+          ForEach(inspector.data.tags, key: entry => entry.canonical) { entry in
+            TagPill(entry.tag, action: name => { search.showTag(name); store.showSearch() })
+          }
+        }
+      }
+    }
+  }
+}
+export { TagsSection }

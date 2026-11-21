@@ -1,0 +1,26 @@
+import { VaultStore } from '../../model/VaultStore.mun'
+import { OutlineGroup } from '../../ui/OutlineGroup.mun'
+import { InspectorSection } from './InspectorSection.mun'
+import { replaceRoute } from '../../ui/router.ts'
+
+// The headings of the open note as a nested outline; choosing one scrolls the note to it. The
+// outline comes from the text that was read, so it always matches the page. Counterpart of
+// OutlineSection.swift.
+struct OutlineSection: View {
+  @Environment(VaultStore.self) var store
+
+  var body: some View {
+    InspectorSection("Outline", count: store.note.headings.length === 0 ? null : store.note.headings.length) {
+      if (store.note.headings.length === 0) {
+        Element('p', { className: 'inspector-placeholder' }) { Text('No headings') }
+      } else {
+        OutlineGroup(store.note.outline, children: \.children, content: { heading in
+          Element('button', { type: 'button', className: 'outline-row', onClick: () => replaceRoute({ vault: store.vaultName, path: store.note.path, heading: heading.id }) }) {
+            Text(heading.title === '' ? 'Untitled heading' : heading.title)
+          }
+        })
+      }
+    }
+  }
+}
+export { OutlineSection }

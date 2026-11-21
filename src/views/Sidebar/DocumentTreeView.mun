@@ -1,0 +1,28 @@
+import { VaultStore } from '../../model/VaultStore.mun'
+import { DocumentTreeItem } from './DocumentTreeItem.mun'
+
+// The vault as a tree of folders and notes, with the open note selected. Counterpart of
+// DocumentTreeView.swift. The tree comes from the index - every note path - so a folder with no
+// notes is not shown yet.
+struct DocumentTreeView: View {
+  @Environment(VaultStore.self) var store
+
+  var body: some View {
+    Element('nav', { className: 'tree', 'aria-label': 'Notes' }) {
+      if (store.indexState === 'loading') {
+        Element('p', { className: 'sidebar-note', role: 'status' }) { Text('Loading notes...') }
+      } else if (store.indexState === 'scanning') {
+        Element('p', { className: 'sidebar-note', role: 'status' }) { Text('The vault is being indexed. Notes appear when it is done.') }
+      } else if (store.indexState === 'failed') {
+        Element('p', { className: 'sidebar-note error', role: 'alert' }) { Text(store.errorMessage ?? 'The notes could not be loaded.') }
+      } else if (store.tree.length === 0) {
+        Element('p', { className: 'sidebar-note' }) { Text('This vault has no notes yet.') }
+      } else {
+        ForEach(store.tree, key: node => node.id) { node in
+          DocumentTreeItem(node: node)
+        }
+      }
+    }
+  }
+}
+export { DocumentTreeView }

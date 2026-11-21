@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Vaults",
+  "description": "GET /v1/vaults and GET /sync/vaults (serve-all only)",
+  "type": "object",
+  "required": ["vaults"],
+  "additionalProperties": false,
+  "properties": {
+    "vaults": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name"],
+        "additionalProperties": false,
+        "properties": {"name": {"type": "string"}}
+      }
+    }
+  }
+}

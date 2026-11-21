@@ -1,0 +1,15 @@
+import { VaultStore } from '../../model/VaultStore.mun'
+import { noteCount } from '../../lib/tree.ts'
+
+// Shown when no note is open. Counterpart of EmptyEditorView.swift.
+struct EmptyEditorView: View {
+  @Environment(VaultStore.self) var store
+
+  var body: some View {
+    Element('div', { className: 'empty-state' }) {
+      Element('h2', null) { Text(store.vaultName ?? 'Andesite') }
+      Element('p', null) { Text(store.documents.length === 0 ? 'Choose a note in the sidebar.' : store.tree.reduce((total, node) => total + noteCount(node), 0) + ' notes. Choose one in the sidebar, or search.') }
+    }
+  }
+}
+export { EmptyEditorView }

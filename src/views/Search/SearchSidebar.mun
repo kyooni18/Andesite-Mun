@@ -1,0 +1,34 @@
+import { VaultStore } from '../../model/VaultStore.mun'
+import { SearchField } from './SearchField.mun'
+import { SearchFilters } from './SearchFilters.mun'
+import { SearchSummary } from './SearchSummary.mun'
+import { SearchResultGroup } from './SearchResultGroup.mun'
+
+// Full-text search with tag and property filters: a search box, the filters, a summary and the
+// matching notes. The search runs in a task keyed by the criteria, so each change cancels the
+// run before it. Counterpart of SearchSidebar.swift.
+struct SearchSidebar: View {
+  @Environment(VaultStore.self) var store
+  var search: any { return store.search }
+
+  var body: some View {
+    Element('div', { className: 'search-sidebar' }) {
+      SearchField()
+      SearchFilters()
+      if (search.hasCriteria()) {
+        SearchSummary()
+      }
+      Element('div', { className: 'search-results', role: 'list', 'aria-label': 'Search results' }) {
+        ForEach(search.results, key: hit => hit.document) { hit in
+          SearchResultGroup(hit: hit)
+        }
+      }
+      if (!search.hasCriteria()) {
+        Element('p', { className: 'sidebar-note' }) { Text('Type to search the text of your notes. Use tag:name or filter by tag and property above.') }
+      }
+    }
+    .task(id: search.criteria() + '|' + store.vaultName) { signal in await search.run(store.client, signal) }
+    .task(id: store.vaultName) { signal in await search.loadFacets(store.client) }
+  }
+}
+export { SearchSidebar }

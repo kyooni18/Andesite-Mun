@@ -1,0 +1,31 @@
+import { VaultStore } from '../../model/VaultStore.mun'
+import { DisclosureGroup } from '../../ui/DisclosureGroup.mun'
+import { DocumentTreeRow } from './DocumentTreeRow.mun'
+import { formatRoute } from '../../ui/router.ts'
+
+// A node of the tree and, for a folder, everything below it. A folder is a DisclosureGroup whose
+// expansion lives in the VaultStore, so it is remembered and a deep link can open it; a note
+// is a real link, so it can be opened in a new tab. Counterpart of DocumentTreeItem.swift.
+struct DocumentTreeItem: View {
+  @Environment(VaultStore.self) var store
+  let node: any
+
+  init(node: any) {
+    self.node = node
+  }
+
+  var body: some View {
+    if (node.children !== null) {
+      DisclosureGroup(isExpanded: Binding(() => store.isExpanded(node.id), open => { store.setExpanded(node.id, open) }), content: {
+        ForEach(node.children, key: child => child.id) { child in
+          DocumentTreeItem(node: child)
+        }
+      }, label: { DocumentTreeRow(node: node, isSelected: false) })
+    } else {
+      Element('a', { className: 'tree-link', href: formatRoute({ vault: store.vaultName, path: node.id }), 'aria-current': store.openPath === node.id ? 'page' : undefined }) {
+        DocumentTreeRow(node: node, isSelected: store.openPath === node.id)
+      }
+    }
+  }
+}
+export { DocumentTreeItem }

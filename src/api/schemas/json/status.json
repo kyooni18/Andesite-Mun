@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Status",
+  "description": "GET /v1/status",
+  "type": "object",
+  "required": ["vault", "state", "entries", "revisions", "openIncidents", "unfinishedMutations"],
+  "additionalProperties": false,
+  "properties": {
+    "vault": {"type": "string", "pattern": "^[0-9a-f]{32}$"},
+    "state": {"type": "string", "description": "`ready` once the first scan completed."},
+    "entries": {"type": "integer", "minimum": 0},
+    "revisions": {"type": "integer", "minimum": 0},
+    "openIncidents": {"type": "integer", "minimum": 0},
+    "unfinishedMutations": {"type": "integer", "minimum": 0}
+  }
+}

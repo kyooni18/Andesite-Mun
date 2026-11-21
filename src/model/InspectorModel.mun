@@ -1,0 +1,42 @@
+import { loadInspector } from '../api/index.ts'
+
+// What the inspector shows for the open note besides its outline: backlinks, outgoing links,
+// unlinked mentions, tags and properties, all from the index. load is called from a task keyed
+// by the note path and the store generation, so a newer request supersedes an older one.
+// Counterpart of InspectorModel in the Swift app.
+@Observable
+final class InspectorModel {
+  var data = null
+  var state = 'idle'
+  var failed = null
+  var pane = 'outline'
+  var token = 0
+
+  func load(client, path, signal) async {
+    this.token += 1
+    let mine = this.token
+    if (client === null || path === null) {
+      this.data = null
+      this.state = 'idle'
+      return
+    }
+    if (this.data !== null && this.data.path !== path) { this.data = null }
+    this.state = 'loading'
+    try {
+      let loaded = await loadInspector(client, path, signal)
+      if (mine !== this.token) { return }
+      this.data = loaded
+      this.state = 'ready'
+      this.failed = null
+    } catch (error) {
+      if (mine !== this.token || signal.aborted) { return }
+      this.state = 'failed'
+      this.failed = error.message
+    }
+  }
+
+  func show(pane) {
+    this.pane = pane
+  }
+}
+export { InspectorModel }

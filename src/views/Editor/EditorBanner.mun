@@ -1,0 +1,25 @@
+// A line of status above the note: still indexing, could not load, or changed elsewhere.
+// Counterpart of EditorBanner.swift.
+struct EditorBanner: View {
+  let message: string
+  let kind: string
+  let actionTitle: any
+  let action: any
+
+  init(_ message: string, kind: string, actionTitle: any, action: any) {
+    self.message = message
+    self.kind = kind
+    self.actionTitle = actionTitle
+    self.action = action
+  }
+
+  var body: some View {
+    Element('div', { className: 'banner ' + kind, role: kind === 'error' ? 'alert' : 'status' }) {
+      Element('span', null) { Text(message) }
+      if (actionTitle !== null) {
+        Element('button', { type: 'button', onClick: () => action() }) { Text(actionTitle) }
+      }
+    }
+  }
+}
+export { EditorBanner }

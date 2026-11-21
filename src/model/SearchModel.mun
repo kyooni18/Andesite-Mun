@@ -1,0 +1,86 @@
+import { searchNotes } from '../api/index.ts'
+
+// The state of the search sidebar: the text, the tag and property filters, and the latest results.
+// run is called from a task keyed by the criteria, so a change of criteria cancels the previous
+// run (the token makes a late answer harmless). Counterpart of SearchSidebar state in the Swift app.
+@Observable
+final class SearchModel {
+  var query = ''
+  var tag = ''
+  var propertyName = ''
+  var propertyText = ''
+  var results = []
+  var searching = false
+  var failed = null
+  var tags = []
+  var properties = []
+  var token = 0
+
+  func criteria() {
+    return JSON.stringify([this.query.trim(), this.tag, this.propertyName, this.propertyText])
+  }
+
+  func hasCriteria() {
+    return this.query.trim() !== '' || this.tag !== '' || this.propertyName !== ''
+  }
+
+  func clear() {
+    this.query = ''
+    this.tag = ''
+    this.propertyName = ''
+    this.propertyText = ''
+  }
+
+  func showTag(name) {
+    this.query = ''
+    this.propertyName = ''
+    this.propertyText = ''
+    this.tag = name
+  }
+
+  func run(client, signal) async {
+    this.token += 1
+    let mine = this.token
+    if (client === null || !this.hasCriteria()) {
+      this.results = []
+      this.searching = false
+      this.failed = null
+      return
+    }
+    await new Promise(resolve => setTimeout(resolve, 180))
+    if (signal.aborted || mine !== this.token) { return }
+    this.searching = true
+    try {
+      let filters = {}
+      if (this.tag !== '') { filters.tag = this.tag }
+      if (this.propertyName !== '') {
+        filters.property = this.propertyName
+        if (this.propertyText !== '') { filters.value = this.propertyText }
+      }
+      let outcome = await searchNotes(client, this.query.trim(), filters, signal)
+      if (mine !== this.token) { return }
+      this.results = outcome.hits
+      this.failed = null
+    } catch (error) {
+      if (mine !== this.token || signal.aborted) { return }
+      this.results = []
+      this.failed = error.message
+    } finally {
+      if (mine === this.token) { this.searching = false }
+    }
+  }
+
+  func loadFacets(client) async {
+    if (client === null) { return }
+    try {
+      let tags = await client.tags({ limit: 100 })
+      let properties = await client.properties({ limit: 100 })
+      this.tags = tags.tags
+      this.properties = properties.properties
+    } catch (error) {
+      this.tags = []
+      this.properties = []
+    }
+  }
+}
+export { SearchModel }

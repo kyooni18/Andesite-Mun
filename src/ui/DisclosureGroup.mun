@@ -1,0 +1,24 @@
+struct DisclosureGroup<Label: View, Content: View>: View {
+  @Binding var isExpanded: Bool
+  let label: Label
+  let content: Content
+
+  init(isExpanded: Binding<Bool>, @ViewBuilder content: () -> Content, @ViewBuilder label: () -> Label) {
+    self.isExpanded = isExpanded
+    self.label = label()
+    self.content = content()
+  }
+
+  var body: some View {
+    Element('div', { className: 'disclosure-group', 'data-expanded': isExpanded }) {
+      Element('button', { type: 'button', className: 'disclosure-label', 'aria-expanded': isExpanded, onClick: () => { isExpanded = !isExpanded } }) {
+        Element('span', { className: 'disclosure-chevron', 'aria-hidden': 'true' }) { Text('▸') }
+        label
+      }
+      if (isExpanded) {
+        Element('div', { className: 'disclosure-content', role: 'group' }) { content }
+      }
+    }
+  }
+}
+export { DisclosureGroup }

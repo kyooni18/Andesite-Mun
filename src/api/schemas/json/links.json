@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "LinksPage",
+  "description": "GET /v1/links",
+  "type": "object",
+  "required": ["links", "total", "nextOffset"],
+  "additionalProperties": false,
+  "properties": {
+    "links": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["source", "target", "fragment", "display", "embed", "status", "path", "fragmentStatus"],
+        "additionalProperties": false,
+        "properties": {
+          "source": {"type": "string", "description": "Path of the document that contains the link."},
+          "target": {"type": "string", "description": "The link target as written."},
+          "fragment": {"type": ["string", "null"]},
+          "display": {"type": ["string", "null"]},
+          "embed": {"type": "boolean"},
+          "status": {"type": "string", "enum": ["resolved", "missing", "ambiguous", "external", "unsupported"]},
+          "path": {"type": ["string", "null"], "description": "Path the link resolves to, when it does."},
+          "fragmentStatus": {"type": "string", "enum": ["none", "resolved", "missing", "ambiguous", "invalid", "unsupported", "unresolved"]}
+        }
+      }
+    },
+    "total": {"type": "integer", "minimum": 0},
+    "nextOffset": {"type": ["integer", "null"]}
+  }
+}

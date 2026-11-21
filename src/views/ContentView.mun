@@ -1,0 +1,69 @@
+import { VaultStore } from '../model/VaultStore.mun'
+import { SizeClass } from '../ui/SizeClass.mun'
+import { NavigationSplitView } from '../ui/NavigationSplitView.mun'
+import { DocumentSidebar } from './Sidebar/DocumentSidebar.mun'
+import { DetailView } from './DetailView.mun'
+import { InspectorView } from './Inspector/InspectorView.mun'
+
+// The main window: the sidebar, the note and the inspector. Counterpart of ContentView.swift.
+// Wide windows show all three side by side. Below 720 pixels the note fills the screen and the
+// sidebar and the inspector open in sheets from the toolbar.
+struct ContentView: View {
+  @Environment(VaultStore.self) var store
+  @State var visibility = 'automatic'
+  @State var inspectorShown = true
+  @State var inspectorSheet = false
+  @State var size = new SizeClass()
+
+  func toggleSidebar() {
+    if (size.horizontal === 'compact') {
+      visibility = visibility === 'all' ? 'automatic' : 'all'
+    } else {
+      visibility = visibility === 'detailOnly' ? 'automatic' : 'detailOnly'
+    }
+  }
+
+  func toggleInspector() {
+    if (size.horizontal === 'compact') {
+      inspectorSheet = !inspectorSheet
+    } else {
+      inspectorShown = !inspectorShown
+    }
+  }
+
+  var body: some View {
+    Element('div', { className: 'content-view' }) {
+      NavigationSplitView(columnVisibility: $visibility, sidebar: {
+        DocumentSidebar()
+      }, detail: {
+        Element('div', { className: 'detail-layout' }) {
+          Element('div', { className: 'detail-main' }) {
+            Element('header', { className: 'toolbar' }) {
+              Element('button', { type: 'button', className: 'toolbar-button', 'aria-label': 'Show or hide the sidebar', 'aria-expanded': size.horizontal === 'compact' ? visibility === 'all' : visibility !== 'detailOnly', onClick: () => toggleSidebar() }) { Text('Files') }
+              Element('span', { className: 'toolbar-title' }) { Text(store.note === null ? (store.vaultName ?? 'Andesite') : store.note.title) }
+              Element('button', { type: 'button', className: 'toolbar-button', 'aria-label': 'Show or hide the inspector', 'aria-expanded': size.horizontal === 'compact' ? inspectorSheet : inspectorShown, onClick: () => toggleInspector() }) { Text('Inspector') }
+            }
+            DetailView()
+          }
+          if (size.horizontal !== 'compact' && inspectorShown) {
+            Element('aside', { className: 'inspector-column' }) { InspectorView() }
+          }
+        }
+        if (size.horizontal === 'compact' && inspectorSheet) {
+          Element('div', { className: 'sheet-backdrop', onClick: () => { inspectorSheet = false } }) {
+            Element('aside', { className: 'sheet inspector-sheet', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Inspector', onClick: event => event.stopPropagation() }) {
+              Element('button', { type: 'button', className: 'sheet-close', 'aria-label': 'Close inspector', onClick: () => { inspectorSheet = false } }) { Text('Done') }
+              InspectorView()
+            }
+          }
+        }
+      })
+    }
+    .onChange(of: store.openPath) { oldPath, newPath in
+      visibility = 'automatic'
+      inspectorSheet = false
+    }
+    .task { signal in size.observe(signal) }
+  }
+}
+export { ContentView }

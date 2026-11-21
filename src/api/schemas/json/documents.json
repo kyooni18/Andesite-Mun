@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DocumentsPage",
+  "description": "GET /v1/documents",
+  "type": "object",
+  "required": ["documents", "total", "nextOffset"],
+  "additionalProperties": false,
+  "properties": {
+    "documents": {"type": "array", "items": {"$ref": "document.json"}},
+    "total": {"type": "integer", "minimum": 0},
+    "nextOffset": {"type": ["integer", "null"]}
+  }
+}

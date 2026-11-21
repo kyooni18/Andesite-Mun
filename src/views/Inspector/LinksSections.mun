@@ -1,0 +1,109 @@
+import { VaultStore } from '../../model/VaultStore.mun'
+import { InspectorSection } from './InspectorSection.mun'
+import { noteTitle } from '../../lib/path.ts'
+import { formatRoute } from '../../ui/router.ts'
+
+// A note that links here, with the links it makes.
+struct BacklinkRow: View {
+  @Environment(VaultStore.self) var store
+  let group: any
+
+  init(group: any) {
+    self.group = group
+  }
+
+  var body: some View {
+    Element('li', { className: 'link-row' }) {
+      Element('a', { href: formatRoute({ vault: store.vaultName, path: group.source }), title: group.source }) { Text(group.title) }
+      if (group.links.length > 1) {
+        Element('span', { className: 'count' }) { Text(String(group.links.length)) }
+      }
+    }
+  }
+}
+
+// Notes that link to the open note, and notes that mention its name without linking.
+// Counterpart of BacklinksSection in LinksSections.swift.
+struct BacklinksSection: View {
+  @Environment(VaultStore.self) var store
+  var inspector: any { return store.inspector }
+
+  var body: some View {
+    Element('div', { className: 'inspector-pane' }) {
+      InspectorSection("Backlinks", count: inspector.data === null ? null : inspector.data.backlinks.length) {
+        if (inspector.data === null) {
+          Element('p', { className: 'inspector-placeholder' }) { Text(inspector.state === 'failed' ? 'Backlinks could not be loaded.' : 'Loading...') }
+        } else if (inspector.data.backlinks.length === 0) {
+          Element('p', { className: 'inspector-placeholder' }) { Text('No backlinks') }
+        } else {
+          Element('ul', { className: 'link-list', 'aria-label': 'Backlinks' }) {
+            ForEach(inspector.data.backlinks, key: group => group.source) { group in
+              BacklinkRow(group: group)
+            }
+          }
+        }
+      }
+      InspectorSection("Unlinked mentions", count: inspector.data === null ? null : inspector.data.mentions.length) {
+        if (inspector.data !== null && inspector.data.mentions.length === 0) {
+          Element('p', { className: 'inspector-placeholder' }) { Text('No unlinked mentions') }
+        } else if (inspector.data !== null) {
+          Element('ul', { className: 'link-list', 'aria-label': 'Unlinked mentions' }) {
+            ForEach(inspector.data.mentions, key: mention => mention.source) { mention in
+              Element('li', { className: 'link-row' }) {
+                Element('a', { href: formatRoute({ vault: store.vaultName, path: mention.source }), title: mention.source }) { Text(noteTitle(mention.source)) }
+                Element('span', { className: 'muted' }) { Text('mentions "' + mention.term + '"') }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+// One outgoing link and where it leads.
+struct OutgoingLinkRow: View {
+  @Environment(VaultStore.self) var store
+  let link: any
+
+  init(link: any) {
+    self.link = link
+  }
+
+  var body: some View {
+    Element('li', { className: 'link-row' }) {
+      if (link.status === 'resolved' && link.path !== null) {
+        Element('a', { href: formatRoute({ vault: store.vaultName, path: link.path, heading: link.fragment ?? undefined }), title: link.path }) { Text(link.display ?? link.target) }
+      } else {
+        Element('span', { className: 'unresolved ' + link.status }) { Text(link.display ?? link.target) }
+      }
+      if (link.status !== 'resolved') {
+        Element('span', { className: 'status-chip ' + link.status }) { Text(link.status) }
+      }
+    }
+  }
+}
+
+// The links the open note makes, with missing and ambiguous ones marked. Counterpart of
+// OutgoingLinksSection in LinksSections.swift.
+struct OutgoingLinksSection: View {
+  @Environment(VaultStore.self) var store
+  var inspector: any { return store.inspector }
+
+  var body: some View {
+    InspectorSection("Outgoing links", count: inspector.data === null ? null : inspector.data.outgoing.length) {
+      if (inspector.data === null) {
+        Element('p', { className: 'inspector-placeholder' }) { Text(inspector.state === 'failed' ? 'Links could not be loaded.' : 'Loading...') }
+      } else if (inspector.data.outgoing.length === 0) {
+        Element('p', { className: 'inspector-placeholder' }) { Text('No outgoing links') }
+      } else {
+        Element('ul', { className: 'link-list', 'aria-label': 'Outgoing links' }) {
+          ForEach(inspector.data.outgoing, key: link => link.target + '#' + (link.fragment ?? '') + link.embed) { link in
+            OutgoingLinkRow(link: link)
+          }
+        }
+      }
+    }
+  }
+}
+export { BacklinksSection, OutgoingLinksSection }

@@ -1,0 +1,26 @@
+import { VaultStore } from '../../model/VaultStore.mun'
+import { VaultBar } from './VaultBar.mun'
+import { SidebarMode } from './SidebarMode.mun'
+import { DocumentTreeView } from './DocumentTreeView.mun'
+import { SearchSidebar } from '../Search/SearchSidebar.mun'
+
+// The left column: the vault, the Files and Search switch, and the tree or the search.
+// Counterpart of DocumentSidebar.swift.
+struct DocumentSidebar: View {
+  @Environment(VaultStore.self) var store
+
+  var body: some View {
+    Element('div', { className: 'sidebar' }) {
+      VaultBar()
+      SidebarMode()
+      Element('div', { className: 'sidebar-scroll' }) {
+        if (store.sidebarMode === 'search') {
+          SearchSidebar()
+        } else {
+          DocumentTreeView()
+        }
+      }
+    }
+  }
+}
+export { DocumentSidebar }

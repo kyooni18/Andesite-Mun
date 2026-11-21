@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Bookmarks",
+  "description": "GET/PUT /v1/bookmarks, in the format of Obsidian's Bookmarks plugin. Unknown fields are kept for Obsidian, so items allow extra properties.",
+  "type": "object",
+  "required": ["items"],
+  "properties": {"items": {"type": "array", "items": {"$ref": "#/$defs/bookmark"}}},
+  "$defs": {
+    "bookmark": {
+      "title": "Bookmark",
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {"type": "string"},
+        "ctime": {"type": "integer"},
+        "path": {"type": "string"},
+        "subpath": {"type": "string"},
+        "title": {"type": "string"},
+        "query": {"type": "string"},
+        "url": {"type": "string"},
+        "items": {"type": "array", "items": {"$ref": "#/$defs/bookmark"}}
+      }
+    }
+  }
+}

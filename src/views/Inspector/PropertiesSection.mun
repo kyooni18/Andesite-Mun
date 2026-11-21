@@ -1,0 +1,36 @@
+import { VaultStore } from '../../model/VaultStore.mun'
+import { InspectorSection } from './InspectorSection.mun'
+import { propertyDisplay, isListProperty } from '../../lib/properties.ts'
+
+// The frontmatter properties of the open note, read-only in this phase. Counterpart of
+// PropertiesSection.swift.
+struct PropertiesSection: View {
+  @Environment(VaultStore.self) var store
+  var inspector: any { return store.inspector }
+
+  var body: some View {
+    InspectorSection("Properties", count: inspector.data === null ? null : inspector.data.properties.length) {
+      if (inspector.data === null) {
+        Element('p', { className: 'inspector-placeholder' }) { Text(inspector.state === 'failed' ? 'Properties could not be loaded.' : 'Loading...') }
+      } else if (inspector.data.metadataState !== 'valid') {
+        Element('p', { className: 'inspector-placeholder error', role: 'alert' }) { Text('The properties could not be read: ' + (inspector.data.diagnostic ?? 'invalid frontmatter')) }
+      } else if (inspector.data.properties.length === 0) {
+        Element('p', { className: 'inspector-placeholder' }) { Text('No properties') }
+      } else {
+        Element('dl', { className: 'properties' }) {
+          ForEach(inspector.data.properties, key: property => property.name) { property in
+            Element('div', { className: 'property', 'data-type': property.type }) {
+              Element('dt', null) { Text(property.name) }
+              Element('dd', { className: isListProperty(property) ? 'pills' : '' }) {
+                ForEach(propertyDisplay(property), key: item => item) { item in
+                  Element('span', { className: isListProperty(property) ? 'pill' : 'plain' }) { Text(item) }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+export { PropertiesSection }

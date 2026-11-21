@@ -1,0 +1,45 @@
+import { DisclosureGroup } from './DisclosureGroup.mun'
+
+struct OutlineNode<Row: View>: View {
+  let item: any
+  let childrenKey: string
+  let row: any
+  @State var isExpanded = false
+
+  init(_ item: any, childrenKey: string, @ViewBuilder row: (item: any) => Row) {
+    self.item = item
+    self.childrenKey = childrenKey
+    self.row = row
+  }
+
+  var body: some View {
+    if (item[childrenKey] && item[childrenKey].length > 0) {
+      DisclosureGroup(isExpanded: $isExpanded, content: {
+        OutlineGroup(item[childrenKey], children: childrenKey, content: row)
+      }, label: { row(item) })
+    } else {
+      row(item)
+    }
+  }
+}
+
+struct OutlineGroup<Row: View>: View {
+  let data: any
+  let childrenKey: string
+  let row: any
+
+  init(_ data: any, children: string, @ViewBuilder content: (item: any) => Row) {
+    self.data = data
+    self.childrenKey = children
+    self.row = content
+  }
+
+  var body: some View {
+    VStack(alignment: .leading) {
+      ForEach(data, key: item => item.id) { item in
+        OutlineNode(item, childrenKey: childrenKey, row: row)
+      }
+    }
+  }
+}
+export { OutlineGroup }

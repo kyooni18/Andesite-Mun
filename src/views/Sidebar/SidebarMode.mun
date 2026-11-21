@@ -1,0 +1,14 @@
+import { VaultStore } from '../../model/VaultStore.mun'
+
+// The switch between the file tree and search. Counterpart of SidebarMode.swift.
+struct SidebarMode: View {
+  @Environment(VaultStore.self) var store
+
+  var body: some View {
+    Element('div', { className: 'segmented', role: 'tablist', 'aria-label': 'Sidebar' }) {
+      Element('button', { type: 'button', role: 'tab', className: store.sidebarMode === 'files' ? 'selected' : '', 'aria-selected': store.sidebarMode === 'files', onClick: () => store.showFiles() }) { Text('Files') }
+      Element('button', { type: 'button', role: 'tab', className: store.sidebarMode === 'search' ? 'selected' : '', 'aria-selected': store.sidebarMode === 'search', onClick: () => store.showSearch() }) { Text('Search') }
+    }
+  }
+}
+export { SidebarMode }

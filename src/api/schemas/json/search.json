@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SearchResults",
+  "description": "GET /v1/search. Text queries return ranked hits without hash, bytes and kind; a query made only of filters (`tag:`, `[property:value]`) returns full documents.",
+  "type": "object",
+  "required": ["hits"],
+  "additionalProperties": false,
+  "properties": {
+    "hits": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["document", "revision", "path", "title"],
+        "additionalProperties": false,
+        "properties": {
+          "document": {"type": "string", "pattern": "^[0-9a-f]{32}$"},
+          "revision": {"type": "string", "pattern": "^[0-9a-f]{32}$"},
+          "path": {"type": "string"},
+          "title": {"type": "string"},
+          "hash": {"type": "string"},
+          "bytes": {"type": "integer"},
+          "kind": {"type": "string"}
+        }
+      }
+    }
+  }
+}

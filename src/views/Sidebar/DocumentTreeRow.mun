@@ -1,0 +1,19 @@
+// One row of the document tree - its icon and name. The row is only a label: the folder around
+// it expands, the link around it opens the note. Counterpart of DocumentTreeRow.swift.
+struct DocumentTreeRow: View {
+  let node: any
+  let isSelected: bool
+
+  init(node: any, isSelected: bool) {
+    self.node = node
+    self.isSelected = isSelected
+  }
+
+  var body: some View {
+    Element('span', { className: isSelected ? 'tree-row selected' : 'tree-row', 'data-kind': node.kind }) {
+      Element('span', { className: 'tree-icon', 'aria-hidden': 'true' }) { Text(node.kind === 'folder' ? '▸' : '·') }
+      Element('span', { className: 'tree-name' }) { Text(node.name) }
+    }
+  }
+}
+export { DocumentTreeRow }

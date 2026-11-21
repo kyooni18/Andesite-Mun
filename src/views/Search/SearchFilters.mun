@@ -1,0 +1,38 @@
+import { VaultStore } from '../../model/VaultStore.mun'
+
+// The tag and property filters of the search: pickers filled from the vault index, sent to the
+// server as the tag, property and value parameters of GET /v1/search. The text box takes the
+// same filters in the Obsidian syntax - tag:name and property:value in brackets.
+struct SearchFilters: View {
+  @Environment(VaultStore.self) var store
+  var search: any { return store.search }
+
+  var body: some View {
+    Element('div', { className: 'search-filters' }) {
+      Element('label', { className: 'filter' }) {
+        Text('Tag')
+        Element('select', { value: search.tag, 'aria-label': 'Filter by tag', onChange: event => { search.tag = event.target.value } }) {
+          Element('option', { value: '' }) { Text('Any tag') }
+          ForEach(search.tags, key: entry => entry.tag) { entry in
+            Element('option', { value: entry.tag }) { Text("#" + entry.tag + " (" + entry.documents + ")") }
+          }
+        }
+      }
+      Element('label', { className: 'filter' }) {
+        Text('Property')
+        Element('select', { value: search.propertyName, 'aria-label': 'Filter by property', onChange: event => { search.propertyName = event.target.value; search.propertyText = '' } }) {
+          Element('option', { value: '' }) { Text('Any property') }
+          ForEach(search.properties, key: entry => entry.key) { entry in
+            Element('option', { value: entry.key }) { Text(entry.key) }
+          }
+        }
+      }
+      if (search.propertyName !== '') {
+        TextField("Property value", text: Binding(() => search.propertyText, text => { search.propertyText = text }))
+          .accessibilityLabel('Property value')
+          .className('search-input')
+      }
+    }
+  }
+}
+export { SearchFilters }

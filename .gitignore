@@ -1,0 +1,12 @@
+node_modules
+dist
+# `pnpm run link:mun` writes absolute paths into these
+pnpm-workspace.yaml
+pnpm-lock.yaml
+src-tauri/target
+src-tauri/gen
+playwright-report
+test-results
+.vite
+*.log
+.DS_Store

@@ -1,0 +1,35 @@
+import { VaultStore } from '../../model/VaultStore.mun'
+
+// Asks for the API token once. It is only held while the form is open: it is sent to the server,
+// which answers with a session cookie the page never sees, and the field is cleared at once.
+// Counterpart of ServerAccountSettings.swift.
+struct LoginView: View {
+  @Environment(VaultStore.self) var store
+  @State var token = ''
+
+  func submit(event) async {
+    event.preventDefault()
+    let entered = token.trim()
+    token = ''
+    if (entered === '') { return }
+    await store.signIn(entered)
+  }
+
+  var body: some View {
+    Element('main', { className: 'login' }) {
+      Element('form', { className: 'login-card', onSubmit: event => submit(event), 'aria-labelledby': 'login-title' }) {
+        Element('h1', { id: 'login-title' }) { Text('Andesite') }
+        Element('p', { className: 'muted' }) { Text('Enter the API token of your server to open your notes.') }
+        Element('label', { className: 'field' }) {
+          Text('API token')
+          Element('input', { type: 'password', name: 'token', autoComplete: 'current-password', spellCheck: false, autoCapitalize: 'off', value: token, 'aria-describedby': 'login-error', onInput: event => { token = event.target.value } })
+        }
+        if (store.signInError !== null) {
+          Element('p', { id: 'login-error', className: 'error', role: 'alert' }) { Text(store.signInError) }
+        }
+        Element('button', { type: 'submit', className: 'primary', disabled: store.signingIn }) { Text(store.signingIn ? 'Signing in...' : 'Sign in') }
+      }
+    }
+  }
+}
+export { LoginView }

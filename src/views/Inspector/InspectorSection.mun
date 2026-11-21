@@ -1,0 +1,25 @@
+// A titled block of the inspector. Counterpart of InspectorSection in InspectorView.swift.
+struct InspectorSection<Content: View>: View {
+  let title: string
+  let count: any
+  let content: Content
+
+  init(_ title: string, count: any, @ViewBuilder content: () => Content) {
+    self.title = title
+    self.count = count
+    self.content = content()
+  }
+
+  var body: some View {
+    Element('section', { className: 'inspector-section', 'aria-label': title }) {
+      Element('h3', null) {
+        Text(title)
+        if (count !== null && count !== undefined) {
+          Element('span', { className: 'count' }) { Text(String(count)) }
+        }
+      }
+      content
+    }
+  }
+}
+export { InspectorSection }

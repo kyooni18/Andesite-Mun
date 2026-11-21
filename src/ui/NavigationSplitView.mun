@@ -1,0 +1,69 @@
+import { SizeClass } from './SizeClass.mun'
+
+// SwiftUIs NavigationSplitView, for the web.
+//
+//   NavigationSplitView - columnVisibility: binding, sidebar: ..., detail: ...
+//   NavigationSplitView - columnVisibility: binding, sidebar: ..., content: ..., detail: ...
+//
+// columnVisibility takes SwiftUIs NavigationSplitViewVisibility cases as written in Swift:
+// .automatic, .all, .doubleColumn and .detailOnly - they lower to the strings of the same name.
+//
+// Regular width shows the columns side by side: the sidebar unless the visibility is .detailOnly,
+// the content column of a three-column view, and the detail column.
+// Compact width - below 720 CSS pixels shows only the detail column and presents the sidebar in a
+// sheet while the visibility is .all or .doubleColumn; dismissing the sheet sets it back to
+// .automatic. SwiftUI would push the columns on a navigation stack there; this is a documented
+// divergence - docs/decisions.md.
+struct NavigationSplitView<Sidebar: View, Content: View, Detail: View>: View {
+  @Binding var columnVisibility: string
+  let sidebar: Sidebar
+  let content: Content
+  let detail: Detail
+  let hasContent: bool
+  @State var size = new SizeClass()
+
+  init(columnVisibility: Binding<string>, @ViewBuilder sidebar: () => Sidebar, @ViewBuilder detail: () => Detail) {
+    self.columnVisibility = columnVisibility
+    self.sidebar = sidebar()
+    self.content = null
+    self.detail = detail()
+    self.hasContent = false
+  }
+
+  init(columnVisibility: Binding<string>, @ViewBuilder sidebar: () => Sidebar, @ViewBuilder content: () => Content, @ViewBuilder detail: () => Detail) {
+    self.columnVisibility = columnVisibility
+    self.sidebar = sidebar()
+    self.content = content()
+    self.detail = detail()
+    self.hasContent = true
+  }
+
+  var isCompact: bool { size.horizontal === 'compact' }
+  var showsSidebarColumn: bool { columnVisibility !== 'detailOnly' }
+  var showsSidebarSheet: bool { columnVisibility === 'all' || columnVisibility === 'doubleColumn' }
+
+  var body: some View {
+    Element('div', { className: 'nsv', 'data-size-class': size.horizontal, 'data-visibility': columnVisibility }) {
+      if (isCompact) {
+        Element('main', { className: 'nsv-detail' }) { detail }
+        if (showsSidebarSheet) {
+          Element('div', { className: 'sheet-backdrop', onClick: () => { columnVisibility = 'automatic' } }) {
+            Element('aside', { className: 'sheet nsv-sheet', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Sidebar', onClick: event => event.stopPropagation() }) {
+              sidebar
+            }
+          }
+        }
+      } else {
+        if (showsSidebarColumn) {
+          Element('aside', { className: 'nsv-sidebar', 'aria-label': 'Sidebar' }) { sidebar }
+        }
+        if (hasContent) {
+          Element('section', { className: 'nsv-content' }) { content }
+        }
+        Element('main', { className: 'nsv-detail' }) { detail }
+      }
+    }
+    .task { signal in size.observe(signal) }
+  }
+}
+export { NavigationSplitView }

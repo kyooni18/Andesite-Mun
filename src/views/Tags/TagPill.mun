@@ -1,0 +1,17 @@
+// A tag as a small pill; selecting it shows the notes that carry it.
+struct TagPill: View {
+  let name: string
+  let action: any
+
+  init(_ name: string, action: any) {
+    self.name = name
+    self.action = action
+  }
+
+  var body: some View {
+    Element('button', { type: 'button', className: 'tag-pill', title: 'Show notes tagged ' + name, onClick: () => action(name) }) {
+      Text("#" + name)
+    }
+  }
+}
+export { TagPill }

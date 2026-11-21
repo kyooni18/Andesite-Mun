@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Metadata",
+  "description": "GET /v1/metadata",
+  "type": "object",
+  "required": ["state", "properties", "tags", "diagnostic"],
+  "additionalProperties": false,
+  "properties": {
+    "state": {"type": "string", "description": "`valid`, or `invalid` (then `diagnostic` says why and `properties` is empty)."},
+    "diagnostic": {"type": ["string", "null"]},
+    "properties": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "type", "value"],
+        "additionalProperties": false,
+        "properties": {
+          "name": {"type": "string"},
+          "type": {"type": "string", "description": "`text`, `number`, `checkbox`, `list`, `tags`, `date`, ..."},
+          "value": {"type": ["string", "number", "boolean", "array", "null"], "items": {"type": "string"}}
+        }
+      }
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["tag", "canonical", "origin"],
+        "additionalProperties": false,
+        "properties": {
+          "tag": {"type": "string"},
+          "canonical": {"type": "string"},
+          "origin": {"type": "string", "enum": ["frontmatter", "inline"]}
+        }
+      }
+    }
+  }
+}

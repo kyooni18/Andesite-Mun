@@ -1,0 +1,17 @@
+import { VaultStore } from '../model/VaultStore.mun'
+import { DocumentReaderView } from './Editor/DocumentReaderView.mun'
+import { EmptyEditorView } from './Placeholders/EmptyEditorView.mun'
+
+// The note, or the empty state. Counterpart of DetailView.swift.
+struct DetailView: View {
+  @Environment(VaultStore.self) var store
+
+  var body: some View {
+    if (store.openPath === null) {
+      EmptyEditorView()
+    } else {
+      DocumentReaderView()
+    }
+  }
+}
+export { DetailView }

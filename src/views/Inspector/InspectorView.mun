@@ -1,0 +1,45 @@
+import { VaultStore } from '../../model/VaultStore.mun'
+import { OutlineSection } from './OutlineSection.mun'
+import { PropertiesSection } from './PropertiesSection.mun'
+import { TagsSection } from './TagsSection.mun'
+import { BacklinksSection, OutgoingLinksSection } from './LinksSections.mun'
+
+// What the inspector can show, one pane at a time: the outline, properties, tags, backlinks and
+// outgoing links of the open note. Counterpart of InspectorView.swift. It loads from the index in a
+// task keyed by the note and the store generation, so it catches up after the note or the index
+// is read again.
+struct InspectorView: View {
+  @Environment(VaultStore.self) var store
+  var inspector: any { return store.inspector }
+
+  var body: some View {
+    Element('div', { className: 'inspector', role: 'complementary', 'aria-label': 'Inspector' }) {
+      Element('div', { className: 'inspector-body' }) {
+        if (store.note === null) {
+          Element('p', { className: 'inspector-placeholder' }) { Text('Open a note to see its outline, links and properties.') }
+        } else if (inspector.pane === 'outline') {
+          OutlineSection()
+        } else if (inspector.pane === 'properties') {
+          PropertiesSection()
+        } else if (inspector.pane === 'tags') {
+          TagsSection()
+        } else if (inspector.pane === 'backlinks') {
+          BacklinksSection()
+        } else {
+          OutgoingLinksSection()
+        }
+      }
+      Element('div', { className: 'inspector-tabs', role: 'tablist', 'aria-label': 'Inspector panes' }) {
+        ForEach(['outline', 'properties', 'tags', 'backlinks', 'outgoing'], key: pane => pane) { pane in
+          Element('button', { type: 'button', role: 'tab', className: inspector.pane === pane ? 'tab selected' : 'tab', 'aria-selected': inspector.pane === pane, onClick: () => inspector.show(pane) }) {
+            Text(pane === 'outgoing' ? 'Outgoing' : pane[0].toUpperCase() + pane.slice(1))
+          }
+        }
+      }
+    }
+    .task(id: (store.openPath ?? '') + '|' + store.generation + '|' + store.vaultName) { signal in
+      await inspector.load(store.client, store.note === null ? null : store.openPath, signal)
+    }
+  }
+}
+export { InspectorView }

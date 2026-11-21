@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Error",
+  "description": "Every error response. `current` accompanies 412 revision_conflict (null when the document no longer exists); `reason` and `hash` accompany sync errors.",
+  "type": "object",
+  "required": ["error"],
+  "properties": {
+    "error": {"type": "string"},
+    "current": {"type": ["string", "null"], "pattern": "^[0-9a-f]{32}$"},
+    "reason": {"type": "string"},
+    "hash": {"type": "string"}
+  },
+  "additionalProperties": false
+}

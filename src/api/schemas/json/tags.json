@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TagsPage",
+  "description": "GET /v1/tags",
+  "type": "object",
+  "required": ["tags", "total", "offset", "nextOffset"],
+  "additionalProperties": false,
+  "properties": {
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["tag", "canonical", "documents"],
+        "additionalProperties": false,
+        "properties": {
+          "tag": {"type": "string"},
+          "canonical": {"type": "string"},
+          "documents": {"type": "integer", "minimum": 0}
+        }
+      }
+    },
+    "total": {"type": "integer", "minimum": 0},
+    "offset": {"type": "integer", "minimum": 0},
+    "nextOffset": {"type": ["integer", "null"]}
+  }
+}

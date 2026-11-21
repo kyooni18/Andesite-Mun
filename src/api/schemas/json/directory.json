@@ -1,0 +1,9 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Directory",
+  "description": "POST /v1/directories",
+  "type": "object",
+  "required": ["path"],
+  "additionalProperties": false,
+  "properties": {"path": {"type": "string"}}
+}

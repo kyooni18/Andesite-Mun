@@ -1,0 +1,9 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Session",
+  "description": "POST /auth/session (the session ID itself is only in the HttpOnly cookie)",
+  "type": "object",
+  "required": ["expiresIn"],
+  "additionalProperties": false,
+  "properties": {"expiresIn": {"type": "integer", "minimum": 1, "description": "Seconds until the session expires."}}
+}

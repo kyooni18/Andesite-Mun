@@ -1,0 +1,19 @@
+import { VaultStore } from '../../model/VaultStore.mun'
+
+// The search box and its clear button. Counterpart of SearchField.swift.
+struct SearchField: View {
+  @Environment(VaultStore.self) var store
+  var search: any { return store.search }
+
+  var body: some View {
+    Element('div', { className: 'search-field' }) {
+      TextField("Search notes", text: Binding(() => search.query, text => { search.query = text }))
+        .accessibilityLabel('Search notes')
+        .className('search-input')
+      if (search.hasCriteria()) {
+        Element('button', { type: 'button', className: 'icon-button', 'aria-label': 'Clear search', onClick: () => search.clear() }) { Text('x') }
+      }
+    }
+  }
+}
+export { SearchField }

@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Mentions",
+  "description": "GET /v1/mentions: unlinked mentions of a document's title.",
+  "type": "object",
+  "required": ["mentions"],
+  "additionalProperties": false,
+  "properties": {
+    "mentions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["source", "term"],
+        "additionalProperties": false,
+        "properties": {"source": {"type": "string"}, "term": {"type": "string"}}
+      }
+    }
+  }
+}

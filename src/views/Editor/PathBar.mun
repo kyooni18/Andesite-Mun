@@ -1,0 +1,15 @@
+// The folders above the open note, as plain text. Counterpart of PathBar.swift.
+struct PathBar: View {
+  let path: string
+
+  init(path: string) {
+    self.path = path
+  }
+
+  var body: some View {
+    Element('nav', { className: 'path-bar', 'aria-label': 'Location' }) {
+      Text(path.includes('/') ? path.slice(0, path.lastIndexOf('/')).split('/').join(' / ') : 'Vault')
+    }
+  }
+}
+export { PathBar }

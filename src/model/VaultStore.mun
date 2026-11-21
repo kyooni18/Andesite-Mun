@@ -1,0 +1,244 @@
+import { newClient, checkSession, loadIndex, loadNote, Unauthorized, NotFound, IndexNotReady } from '../api/index.ts'
+import { platform } from '../platform/index.ts'
+import { currentRoute, navigate, replaceRoute, onRouteChange } from '../ui/router.ts'
+import { ancestors } from '../lib/tree.ts'
+import { SearchModel } from './SearchModel.mun'
+import { InspectorModel } from './InspectorModel.mun'
+import { readExpanded, writeExpanded } from '../lib/memory.ts'
+
+// What the app knows about the server and the vault being browsed (the counterpart of VaultModel
+// in the Swift app). The URL is the source of truth for which vault and note are open:
+// select only navigates, and applyRoute reacts to the URL, so links, Back, Forward and
+// deep links all take the same path. Nothing is cached past a revision: a note is read again each
+// time it is opened, and carries the revision it was read at.
+@Observable
+final class VaultStore {
+  var phase = 'booting'
+  var errorMessage = null
+  var signingIn = false
+  var signInError = null
+
+  var vaults = []
+  var vaultName = null
+  var documents = []
+  var tree = []
+  var expanded = {}
+  var indexState = 'idle'
+  var sidebarMode = 'files'
+
+  var openPath = null
+  var note = null
+  var noteState = 'idle'
+  var noteError = null
+  var heading = null
+  var generation = 0
+
+  var search = new SearchModel()
+  var inspector = new InspectorModel()
+  var client = null
+  var loadToken = 0
+  var noteToken = 0
+  var stopRouting = null
+  var ready = false
+
+  func start() async {
+    if (this.stopRouting === null) {
+      this.stopRouting = onRouteChange(route => { this.applyRoute(route) })
+    }
+    await this.bootstrap()
+  }
+
+  func stop() {
+    if (this.stopRouting !== null) { this.stopRouting(); this.stopRouting = null }
+  }
+
+  func bootstrap() async {
+    this.phase = 'booting'
+    this.errorMessage = null
+    try {
+      let session = await checkSession(newClient('main'))
+      if (session.state === 'signedOut') { this.phase = 'signedOut'; return }
+      this.vaults = session.vaults
+      let route = currentRoute()
+      let wanted = route.vault
+      if (wanted === null || !session.vaults.includes(wanted)) {
+        wanted = session.vaults.includes('main') ? 'main' : session.vaults[0]
+        if (wanted === undefined) { this.phase = 'failed'; this.errorMessage = 'The server has no vaults.'; return }
+        this.phase = 'ready'
+        replaceRoute({ vault: wanted, path: wanted === route.vault ? route.path : '' })
+        return
+      }
+      this.phase = 'ready'
+      await this.applyRoute(route)
+    } catch (error) {
+      this.phase = 'failed'
+      this.errorMessage = error.message
+    }
+  }
+
+  func signIn(token) async {
+    this.signingIn = true
+    this.signInError = null
+    try {
+      await platform().login(token)
+      this.signingIn = false
+      await this.bootstrap()
+    } catch (error) {
+      this.signingIn = false
+      this.signInError = error instanceof Unauthorized ? 'That token was not accepted.' : error.message
+    }
+  }
+
+  func signOut() async {
+    this.noteToken += 1
+    this.loadToken += 1
+    try { await platform().logout() } catch (error) { }
+    this.vaults = []
+    this.vaultName = null
+    this.documents = []
+    this.tree = []
+    this.note = null
+    this.openPath = null
+    this.noteState = 'idle'
+    this.client = null
+    this.phase = 'signedOut'
+  }
+
+
+  func applyRoute(route) async {
+    if (this.phase !== 'ready' || route.vault === null) { return }
+    if (route.vault !== this.vaultName) {
+      if (!this.vaults.includes(route.vault)) {
+        this.phase = 'failed'
+        this.errorMessage = 'There is no vault called ' + route.vault + '.'
+        return
+      }
+      await this.loadVault(route.vault)
+    }
+    this.heading = route.heading ?? null
+    if (route.path === '') {
+      this.noteToken += 1
+      this.openPath = null
+      this.note = null
+      this.noteState = 'idle'
+      return
+    }
+    if (route.path !== this.openPath || this.note === null) {
+      await this.openNote(route.path)
+    }
+    this.generation += 1
+  }
+
+  func select(path) {
+    navigate({ vault: this.vaultName, path: path })
+  }
+
+  func switchVault(name) {
+    navigate({ vault: name, path: '' })
+  }
+
+
+  func loadVault(name) async {
+    this.loadToken += 1
+    let token = this.loadToken
+    this.vaultName = name
+    this.client = newClient(name)
+    this.documents = []
+    this.tree = []
+    this.note = null
+    this.openPath = null
+    this.noteState = 'idle'
+    this.expanded = readExpanded(name)
+    this.indexState = 'loading'
+    try {
+      let index = await loadIndex(this.client, { onWaiting: () => { if (token === this.loadToken) { this.indexState = 'scanning' } } })
+      if (token !== this.loadToken) { return }
+      this.documents = index.documents
+      this.tree = index.tree
+      this.indexState = 'ready'
+    } catch (error) {
+      if (token !== this.loadToken) { return }
+      this.indexState = 'failed'
+      if (error instanceof Unauthorized) { this.phase = 'signedOut'; return }
+      this.errorMessage = error.message
+    }
+  }
+
+  func refresh() async {
+    if (this.phase !== 'ready' || this.client === null || this.indexState === 'loading') { return }
+    let name = this.vaultName
+    try {
+      let index = await loadIndex(this.client)
+      if (name !== this.vaultName) { return }
+      this.documents = index.documents
+      this.tree = index.tree
+      this.generation += 1
+      if (this.openPath !== null && this.note !== null) {
+        let entry = index.documents.find(document => document.path === this.openPath)
+        if (entry === undefined) { this.noteState = 'notFound'; this.note = null }
+        else if (entry.revision !== this.note.revision) { await this.openNote(this.openPath) }
+      }
+    } catch (error) {
+      if (error instanceof Unauthorized) { this.phase = 'signedOut' }
+    }
+  }
+
+
+  func isExpanded(id) {
+    return this.expanded[id] === true
+  }
+
+  func setExpanded(id, open) {
+    let next = { ...this.expanded }
+    if (open) { next[id] = true } else { delete next[id] }
+    this.expanded = next
+    writeExpanded(this.vaultName, next)
+  }
+
+  func toggle(id) {
+    this.setExpanded(id, !this.isExpanded(id))
+  }
+
+  func reveal(path) {
+    let next = { ...this.expanded }
+    for (const folder of ancestors(path)) { next[folder] = true }
+    this.expanded = next
+  }
+
+
+  func openNote(path) async {
+    this.noteToken += 1
+    let token = this.noteToken
+    this.openPath = path
+    this.noteState = 'loading'
+    this.noteError = null
+    this.reveal(path)
+    try {
+      let view = await loadNote(this.client, path, this.documents)
+      if (token !== this.noteToken) { return }
+      this.note = view
+      this.noteState = 'ready'
+      this.generation += 1
+    } catch (error) {
+      if (token !== this.noteToken) { return }
+      this.note = null
+      if (error instanceof NotFound) { this.noteState = 'notFound' }
+      else if (error instanceof Unauthorized) { this.phase = 'signedOut' }
+      else if (error instanceof IndexNotReady) { this.noteState = 'failed'; this.noteError = 'The vault is still being indexed. Try again in a moment.' }
+      else { this.noteState = 'failed'; this.noteError = error.message }
+    }
+  }
+
+  func retryNote() async {
+    if (this.openPath !== null) { await this.openNote(this.openPath) }
+  }
+
+  func showSearch() {
+    this.sidebarMode = 'search'
+  }
+
+  func showFiles() {
+    this.sidebarMode = 'files'
+  }
+}
+export { VaultStore }

@@ -1,0 +1,19 @@
+import { VaultStore } from '../../model/VaultStore.mun'
+
+// The vault picker and the account menu at the top of the sidebar. Counterpart of VaultBar.swift
+// and VaultMenu.swift: the vaults come from GET /v1/vaults.
+struct VaultBar: View {
+  @Environment(VaultStore.self) var store
+
+  var body: some View {
+    Element('div', { className: 'vault-bar' }) {
+      Element('select', { className: 'vault-select', value: store.vaultName ?? '', 'aria-label': 'Vault', onChange: event => store.switchVault(event.target.value) }) {
+        ForEach(store.vaults, key: name => name) { name in
+          Element('option', { value: name }) { Text(name) }
+        }
+      }
+      Element('button', { type: 'button', className: 'text-button', onClick: () => store.signOut() }) { Text('Sign out') }
+    }
+  }
+}
+export { VaultBar }

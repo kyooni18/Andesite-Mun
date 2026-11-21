@@ -1,0 +1,20 @@
+import { VaultStore } from '../../model/VaultStore.mun'
+
+// The line under the search box: how many notes matched. Counterpart of SearchSummary.swift.
+struct SearchSummary: View {
+  @Environment(VaultStore.self) var store
+  var search: any { return store.search }
+
+  var body: some View {
+    Element('p', { className: 'search-summary', role: 'status', 'aria-live': 'polite' }) {
+      if (search.failed !== null) {
+        Text("Search failed: " + search.failed)
+      } else if (search.searching) {
+        Text('Searching...')
+      } else {
+        Text(search.results.length === 1 ? '1 note' : search.results.length + ' notes')
+      }
+    }
+  }
+}
+export { SearchSummary }
