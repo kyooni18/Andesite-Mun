@@ -13,8 +13,8 @@ export interface RenderContext {
   path: string
   /** The note's outgoing links as the server resolved them (`/v1/links`); undefined while unknown. */
   links?: readonly Link[]
-  /** URL for an attachment (an image embed), or null when there is none by that name. */
-  attachmentURL?: (target: string) => string | null
+  /** URL of a vault file (an image embed) by its vault-relative path. */
+  fileURL?: (path: string) => string
 }
 
 export type LinkStatus = 'resolved' | 'missing' | 'ambiguous' | 'external' | 'unsupported' | 'unknown'
@@ -161,23 +161,24 @@ export function resolveLinks(root: ParentNode, context: RenderContext): void {
     }
     const answer = byKey.get(linkKey(link)) ?? byKey.get(linkKey({ ...link, fragment: null }))
     const status: LinkStatus = answer ? (answer.status as LinkStatus) : context.links ? 'missing' : 'unknown'
-    if (link.embed) {
-      const url = context.attachmentURL?.(link.target)
-      if (url && /\.(png|jpe?g|gif|webp|svg|avif|bmp)$/i.test(link.target)) {
-        const image = document.createElement('img')
-        image.src = url
-        image.alt = link.target
-        image.loading = 'lazy'
-        image.className = 'embed'
-        anchor.replaceWith(image)
-        continue
-      }
+    if (link.embed && status === 'resolved' && answer?.path && context.fileURL && isImagePath(answer.path)) {
+      const image = document.createElement('img')
+      image.src = context.fileURL(answer.path)
+      image.alt = link.target
+      image.loading = 'lazy'
+      image.className = 'embed'
+      anchor.replaceWith(image)
+      continue
     }
     anchor.removeAttribute('data-wikilink')
     anchor.classList.add(status)
     if (status === 'resolved' && answer?.path) {
       anchor.setAttribute('href', formatRoute({ vault: context.vault, path: answer.path, ...(link.fragment ? { heading: link.fragment } : {}) }))
       anchor.dataset.path = answer.path
+      if (answer.fragmentStatus === 'missing') {
+        anchor.classList.add('fragment-missing')
+        anchor.title = 'The note has no such heading'
+      }
     } else {
       // Not a link: there is nowhere to go (a missing note) or several places (an ambiguous name).
       const span = document.createElement('span')
@@ -202,6 +203,10 @@ export function resolveLinks(root: ParentNode, context: RenderContext): void {
       anchor.setAttribute('href', formatRoute({ vault: context.vault, path: resolved, ...(heading ? { heading } : {}) }))
     }
   }
+}
+
+function isImagePath(path: string): boolean {
+  return ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg', '.avif', '.bmp'].some(extension => path.toLowerCase().endsWith(extension))
 }
 
 function normalizePath(path: string): string {

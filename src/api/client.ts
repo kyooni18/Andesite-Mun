@@ -148,9 +148,11 @@ export class AndesiteClient {
 
   /** Sends one request and throws the typed error for a failed one. */
   async request(path: string, query: Query = {}, init: RequestInit = {}): Promise<Response> {
-    const search = new URLSearchParams()
-    for (const [name, value] of Object.entries(query as Record<string, unknown>)) if (value !== undefined) search.set(name, String(value))
-    const url = `${this.platform.baseUrl}${path}${search.size ? `?${search}` : ''}`
+    // encodeURIComponent, not URLSearchParams: the server reads a '+' literally, so a space must be %20.
+    const pairs = Object.entries(query as Record<string, unknown>)
+      .filter(([, value]) => value !== undefined)
+      .map(([name, value]) => `${encodeURIComponent(name)}=${encodeURIComponent(String(value))}`)
+    const url = `${this.platform.baseUrl}${path}${pairs.length ? `?${pairs.join('&')}` : ''}`
     let response: Response
     try {
       response = await this.fetchImpl(url, await this.platform.authorize(init))

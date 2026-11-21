@@ -214,7 +214,7 @@ final class VaultStore {
     this.noteError = null
     this.reveal(path)
     try {
-      let view = await loadNote(this.client, path, this.documents)
+      let view = await loadNote(this.client, path)
       if (token !== this.noteToken) { return }
       this.note = view
       this.noteState = 'ready'

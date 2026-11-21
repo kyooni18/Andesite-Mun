@@ -1,21 +1,24 @@
 import { DisclosureGroup } from './DisclosureGroup.mun'
 
+// One item of an OutlineGroup: a plain row for a leaf, a DisclosureGroup for an item with children.
 struct OutlineNode<Row: View>: View {
   let item: any
   let childrenKey: string
+  let startsExpanded: bool
   let row: any
-  @State var isExpanded = false
+  @State var toggled = false
 
-  init(_ item: any, childrenKey: string, @ViewBuilder row: (item: any) => Row) {
+  init(_ item: any, childrenKey: string, startsExpanded: bool, row: (any) -> Row) {
     self.item = item
     self.childrenKey = childrenKey
+    self.startsExpanded = startsExpanded
     self.row = row
   }
 
   var body: some View {
     if (item[childrenKey] && item[childrenKey].length > 0) {
-      DisclosureGroup(isExpanded: $isExpanded, content: {
-        OutlineGroup(item[childrenKey], children: childrenKey, content: row)
+      DisclosureGroup(isExpanded: Binding(() => startsExpanded !== toggled, open => { toggled = open !== startsExpanded }), content: {
+        OutlineGroup(item[childrenKey], children: childrenKey, expanded: startsExpanded, content: row)
       }, label: { row(item) })
     } else {
       row(item)
@@ -23,21 +26,35 @@ struct OutlineNode<Row: View>: View {
   }
 }
 
+// SwiftUI's OutlineGroup(data, children:) { item in ... }, for the web: the rows of a tree, each
+// item with children inside a DisclosureGroup. children is a key path (children: \.children).
+// Items need an id. Rows start collapsed, as in SwiftUI; expanded: true (a Mun extension) opens
+// them all at first. The content closure is passed with its label - content: { item in ... } -
+// because Mun does not match a trailing closure to this initializer.
 struct OutlineGroup<Row: View>: View {
   let data: any
   let childrenKey: string
+  let startsExpanded: bool
   let row: any
 
-  init(_ data: any, children: string, @ViewBuilder content: (item: any) => Row) {
+  init(_ data: any, children: string, content: (any) -> Row) {
     self.data = data
     self.childrenKey = children
+    self.startsExpanded = false
+    self.row = content
+  }
+
+  init(_ data: any, children: string, expanded: bool, content: (any) -> Row) {
+    self.data = data
+    self.childrenKey = children
+    self.startsExpanded = expanded
     self.row = content
   }
 
   var body: some View {
     VStack(alignment: .leading) {
       ForEach(data, key: item => item.id) { item in
-        OutlineNode(item, childrenKey: childrenKey, row: row)
+        OutlineNode(item, childrenKey: childrenKey, startsExpanded: startsExpanded, row: row)
       }
     }
   }

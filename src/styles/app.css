@@ -60,7 +60,7 @@ button.primary:disabled { opacity: 0.6; cursor: default; }
 .text-button:hover { background: var(--hover); }
 
 /* Layout: NavigationSplitView */
-.content-view, .nsv { flex: 1; min-height: 0; display: flex; height: 100%; }
+.content-view, .nsv { flex: 1; min-height: 0; min-width: 0; display: flex; height: 100%; width: 100%; }
 .nsv-sidebar { width: 280px; flex: none; border-right: 1px solid var(--border); background: var(--bg-sidebar); display: flex; flex-direction: column; min-height: 0; }
 .nsv-content { width: 320px; flex: none; border-right: 1px solid var(--border); min-height: 0; overflow: auto; }
 .nsv-detail { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
@@ -123,8 +123,8 @@ button.primary:disabled { opacity: 0.6; cursor: default; }
 .search-hit-path { font-size: 12px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* Note */
-.note-scroll { flex: 1; min-height: 0; overflow: auto; }
-.note-page { max-width: 760px; margin: 0 auto; padding: 18px 28px 80px; }
+.note-scroll { flex: 1; min-height: 0; min-width: 0; overflow: auto; }
+.note-page { min-width: 0; max-width: 760px; margin: 0 auto; padding: 18px 28px 80px; }
 .path-bar { font-size: 12px; color: var(--text-muted); }
 .note-title { margin: 4px 0 18px; font-size: 30px; line-height: 1.2; overflow-wrap: anywhere; }
 .loading, .empty-state { color: var(--text-muted); text-align: center; margin-top: 18vh; padding: 0 24px; }
@@ -152,6 +152,7 @@ button.primary:disabled { opacity: 0.6; cursor: default; }
 .markdown-body .math-display { overflow-x: auto; margin: 0.8em 0; text-align: center; }
 .wikilink { border-radius: 3px; }
 a.wikilink.resolved { color: var(--accent); text-decoration: none; border-bottom: 1px solid color-mix(in srgb, var(--accent) 45%, transparent); }
+a.wikilink.fragment-missing { border-bottom-style: dashed; }
 span.wikilink.missing { color: var(--danger); border-bottom: 1px dashed var(--danger); cursor: not-allowed; }
 span.wikilink.ambiguous { color: var(--warning); border-bottom: 1px dotted var(--warning); cursor: help; }
 span.wikilink.unknown { color: var(--text-muted); }

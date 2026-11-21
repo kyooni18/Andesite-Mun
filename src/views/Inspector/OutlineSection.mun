@@ -14,7 +14,7 @@ struct OutlineSection: View {
       if (store.note.headings.length === 0) {
         Element('p', { className: 'inspector-placeholder' }) { Text('No headings') }
       } else {
-        OutlineGroup(store.note.outline, children: \.children, content: { heading in
+        OutlineGroup(store.note.outline, children: \.children, expanded: true, content: { heading in
           Element('button', { type: 'button', className: 'outline-row', onClick: () => replaceRoute({ vault: store.vaultName, path: store.note.path, heading: heading.id }) }) {
             Text(heading.title === '' ? 'Untitled heading' : heading.title)
           }

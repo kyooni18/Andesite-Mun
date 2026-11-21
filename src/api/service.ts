@@ -67,7 +67,7 @@ export { noteTitle }
  * request for the text, one for the links, in parallel. The result is only valid for the revision it
  * carries; nothing is kept once the note is closed.
  */
-export async function loadNote(client: AndesiteClient, path: string, documents: readonly Document[], signal?: AbortSignal): Promise<NoteView> {
+export async function loadNote(client: AndesiteClient, path: string, signal?: AbortSignal): Promise<NoteView> {
   const [file, links] = await Promise.all([
     client.file(path, signal),
     client.allLinks(path, 'outgoing', signal).catch((error): Link[] | undefined => {
@@ -76,19 +76,7 @@ export async function loadNote(client: AndesiteClient, path: string, documents: 
       throw error
     }),
   ])
-  const attachments = new Map<string, string>()
-  for (const document of documents) if (document.kind !== 'markdown') attachments.set(document.path.toLowerCase(), document.path)
-  const html = await renderNote(file.text, {
-    vault: client.vault,
-    path,
-    links,
-    attachmentURL: target => {
-      const wanted = target.split('|')[0].trim().toLowerCase()
-      const exact = attachments.get(wanted)
-      const byName = exact ?? [...attachments.entries()].find(([key]) => key.endsWith('/' + wanted))?.[1]
-      return byName ? client.fileURL(byName) : null
-    },
-  })
+  const html = await renderNote(file.text, { vault: client.vault, path, links, fileURL: file => client.fileURL(file) })
   const headings = extractHeadings(file.text)
   return { path, title: noteTitle(path), revision: file.revision, text: file.text, html, headings, outline: outlineTree(headings) }
 }
@@ -131,7 +119,7 @@ export async function loadInspector(client: AndesiteClient, path: string, signal
     backlinks: [...groups.values()].sort((a, b) => a.title.localeCompare(b.title, undefined, { numeric: true })),
     outgoing,
     mentions: mentions.mentions,
-    tags: metadata.tags,
+    tags: uniqueTags(metadata.tags),
     properties: metadata.properties,
     metadataState: metadata.state,
     diagnostic: metadata.diagnostic,
@@ -152,4 +140,10 @@ export interface SearchOutcome {
 export async function searchNotes(client: AndesiteClient, query: string, filters: SearchFilters, signal?: AbortSignal): Promise<SearchOutcome> {
   const { hits } = await client.search(query, { limit: 100, ...filters }, signal)
   return { hits: hits.map(hit => ({ ...hit })) }
+}
+
+/** A tag that is both in the frontmatter and in the text is listed once. */
+export function uniqueTags(tags: readonly MetadataTag[]): MetadataTag[] {
+  const seen = new Set<string>()
+  return tags.filter(tag => !seen.has(tag.canonical) && seen.add(tag.canonical))
 }
