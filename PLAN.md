@@ -10,7 +10,7 @@ web app (`deploy/www/index.html` says "The web app will live here") and proxies
 `/v1/` and `/sync/` to the server.
 
 This repository adds a **second UI written in Mün** (`.mun`, SwiftUI-like syntax,
-compiled to JavaScript). One Mün codebase ships to:
+compiled to JavaScript). It holds both targets, web and native (desktop). One Mün codebase ships to:
 
 | Target | How | Replaces |
 |---|---|---|
