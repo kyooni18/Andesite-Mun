@@ -17,7 +17,9 @@
     "e2e": "playwright test --trace off",
     "deploy": "node scripts/deploy.mjs",
     "link:mun": "node scripts/link-mun.mjs",
-    "desktop:check": "node scripts/desktop-check.mjs"
+    "desktop:check": "node scripts/desktop-check.mjs",
+    "desktop:dev": "tauri dev --no-watch",
+    "desktop:build": "tauri build"
   },
   "dependencies": {
     "@mun-ui/core": "0.2.0",

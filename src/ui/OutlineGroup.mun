@@ -29,7 +29,7 @@ struct OutlineNode<Row: View>: View {
 // SwiftUI's OutlineGroup(data, children:) { item in ... }, for the web: the rows of a tree, each
 // item with children inside a DisclosureGroup. children is a key path (children: \.children).
 // Items need an id. Rows start collapsed, as in SwiftUI; expanded: true (a Mun extension) opens
-// them all at first. The content closure is passed with its label - content: { item in ... } -
+// them all at first. The content closure is passed with its label, content: { item in ... },
 // because Mun does not match a trailing closure to this initializer.
 struct OutlineGroup<Row: View>: View {
   let data: any

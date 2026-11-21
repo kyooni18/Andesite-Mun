@@ -1,0 +1,10 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "main",
+  "description": "The main window of the remote-only client: window lifecycle only. No file pickers, no local file access, no shell: the app talks to an Andesite server (Phase 4 adds a keychain command and Rust-side HTTP).",
+  "windows": ["main"],
+  "permissions": [
+    "mun-desktop:allow-window-info",
+    "core:event:allow-listen", "core:event:allow-unlisten", "core:window:allow-close", "core:window:allow-destroy"
+  ]
+}

@@ -1,8 +1,8 @@
 import { currentSizeClass, onSizeClassChange } from './sizeClass.ts'
 
-// SwiftUIs horizontalSizeClass environment value: "compact" - a phone or a narrow window or
-// "regular". Create one per view that needs it and call observe - signal from .task.
-//  - The field is not called "value": Mün reads "state.value" as the states own reference.
+// SwiftUI's horizontalSizeClass for the web: "compact" (a phone or a narrow window) or "regular".
+// Create one per view that needs it and call observe(signal) from .task.
+// The field is not called "value": Mün reads "state.value" as the state's own reference.
 @Observable
 final class SizeClass {
   var horizontal = currentSizeClass()

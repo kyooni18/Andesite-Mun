@@ -10,8 +10,8 @@
 //   (cd ../mun && pnpm install && pnpm add -Dw @types/node@22 && pnpm build)
 //   pnpm run link:mun ../mun
 import { spawnSync } from 'node:child_process'
-import { existsSync, readFileSync, writeFileSync } from 'node:fs'
-import { resolve } from 'node:path'
+import { existsSync, mkdirSync, readFileSync, symlinkSync, writeFileSync } from 'node:fs'
+import { dirname, resolve } from 'node:path'
 
 const root = resolve(import.meta.dirname, '..')
 const mun = resolve(process.argv[2] ?? process.env.MUN_ROOT ?? resolve(root, '../mun'))
@@ -30,4 +30,11 @@ run('node', [resolve(mun, 'bin/mun.mjs'), 'link', '.', '--renderer', 'web', '--l
 // work, so keep the committed exact pins.
 writeFileSync(manifest, original)
 run('pnpm', ['install', '--no-frozen-lockfile'])
+// The desktop shell's Rust crate lives in @mun-ui/desktop (not on npm); Cargo.toml reads it from node_modules.
+const desktop = resolve(mun, 'packages/desktop')
+const target = resolve(root, 'node_modules/@mun-ui/desktop')
+if (existsSync(desktop) && !existsSync(target)) {
+  mkdirSync(dirname(target), { recursive: true })
+  symlinkSync(desktop, target, 'dir')
+}
 console.log(`Linked Mün from ${mun}`)

@@ -1,19 +1,16 @@
 import { SizeClass } from './SizeClass.mun'
 
-// SwiftUIs NavigationSplitView, for the web.
+// SwiftUI's NavigationSplitView for the web: two columns (sidebar, detail) or three (sidebar,
+// content, detail).
 //
-//   NavigationSplitView - columnVisibility: binding, sidebar: ..., detail: ...
-//   NavigationSplitView - columnVisibility: binding, sidebar: ..., content: ..., detail: ...
+// columnVisibility is a Binding to one of the strings "automatic", "all", "doubleColumn" or
+// "detailOnly", the cases of NavigationSplitViewVisibility (Mun has no enums yet).
 //
-// columnVisibility takes SwiftUIs NavigationSplitViewVisibility cases as written in Swift:
-// .automatic, .all, .doubleColumn and .detailOnly - they lower to the strings of the same name.
-//
-// Regular width shows the columns side by side: the sidebar unless the visibility is .detailOnly,
-// the content column of a three-column view, and the detail column.
-// Compact width - below 720 CSS pixels shows only the detail column and presents the sidebar in a
-// sheet while the visibility is .all or .doubleColumn; dismissing the sheet sets it back to
-// .automatic. SwiftUI would push the columns on a navigation stack there; this is a documented
-// divergence - docs/decisions.md.
+// At regular width the columns sit side by side: the sidebar unless the visibility is "detailOnly",
+// the content column of a three-column view, and the detail column. Below 720 CSS pixels only the
+// detail column shows, and the sidebar opens in a sheet while the visibility is "all" or
+// "doubleColumn"; dismissing the sheet sets it back to "automatic". SwiftUI would push the
+// columns onto a navigation stack there: a documented divergence (docs/decisions.md).
 struct NavigationSplitView<Sidebar: View, Content: View, Detail: View>: View {
   @Binding var columnVisibility: string
   let sidebar: Sidebar
